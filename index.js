@@ -9,11 +9,18 @@ require("dotenv").config();
 const cookieParser = require("cookie-parser");
 const moment = require("moment");
 const momentTimezone = require("moment-timezone");
+const socketIO = require("socket.io");
+const { chatSocket } = require("./socket/chatSocket");
+const http = require("http");
 
 const DB = require("./models");
 
 const app = express();
 const PORT = process.env.PORT || 3004;
+const server = http.createServer(app);
+const io = socketIO(server, {
+  cors: { origin: "*", methods: ["GET", "POST"] },
+});
 
 const corsObj = {
   origin: true,
@@ -38,6 +45,10 @@ app.use(cookieParser());
 
 app.use(bodyParser.json());
 
+// socket
+chatSocket(io);
+app.set("io", io);
+
 // connectToMongoDB();
 // indexRoutes(app);
 
@@ -53,11 +64,15 @@ DB.mongoose
 
     const currentDate = moment();
     const timezone = momentTimezone.tz.guess();
-    app.listen(PORT, () => {
+    server.listen(PORT, () => {
       console.log(`\nNODE_ENV: ${process.env.NODE_ENV}`);
       console.log(`TZ: ${process.env.TZ} \n`);
       console.log(`Agriculture System listening on port ${PORT}`);
-      console.log(`Current Date: ${currentDate.format("YYYY-MM-DD HH:mm:ss")} ${timezone} \n`);
+      console.log(
+        `Current Date: ${currentDate.format(
+          "YYYY-MM-DD HH:mm:ss"
+        )} ${timezone} \n`
+      );
     });
   })
 
@@ -65,6 +80,4 @@ DB.mongoose
     console.error("Failed to connect to MongoDB", err);
   });
 
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-});
+// ...existing code...
